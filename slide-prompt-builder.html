@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slide Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F4F6FB;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #F8F9FF;
+  --border: #E2E6F0;
+  --border-hover: #B8C2E0;
+  --accent: #4F6EF7;
+  --accent2: #E040C8;
+  --accent3: #00C48C;
+  --accent-light: #EEF1FF;
+  --text: #1A1D2E;
+  --muted: #7A82A0;
+  --selected-bg: #EEF1FF;
+  --selected-border: #4F6EF7;
+  --output-bg: #1A1D2E;
+  --output-text: #E8ECFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Baloo 2', cursive, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+.top-bar {
+  background: var(--accent);
+  padding: 28px 20px 30px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.top-bar::before {
+  content: '';
+  position: absolute; top: -50px; right: -60px;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,0.07); border-radius: 50%;
+}
+.top-bar::after {
+  content: '';
+  position: absolute; bottom: -40px; left: -50px;
+  width: 180px; height: 180px;
+  background: rgba(255,255,255,0.05); border-radius: 50%;
+}
+.top-tag {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: rgba(255,255,255,0.8); text-transform: uppercase;
+  background: rgba(255,255,255,0.15);
+  padding: 4px 14px; border-radius: 20px; margin-bottom: 10px;
+}
+.top-bar h1 {
+  font-size: clamp(24px, 4.5vw, 40px);
+  font-weight: 800; color: #fff; line-height: 1.15;
+  white-space: nowrap; margin-bottom: 8px;
+}
+.top-bar p {
+  color: rgba(255,255,255,0.75); font-size: 14px;
+  max-width: 440px; margin: 0 auto; line-height: 1.5;
+}
+.progress-wrap {
+  max-width: 800px; margin: 0 auto; padding: 18px 20px 0;
+}
+.progress-steps { display: flex; gap: 6px; margin-bottom: 7px; }
+.step-dot {
+  flex: 1; height: 4px; background: var(--border);
+  border-radius: 2px; transition: background 0.3s;
+}
+.step-dot.active { background: var(--accent); }
+.step-dot.done { background: var(--accent3); }
+.progress-label { font-size: 12px; color: var(--muted); text-align: right; }
+.progress-label span { color: var(--accent); font-weight: 700; }
+.main { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+.section { margin-top: 30px; }
+.section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.step-num {
+  width: 26px; height: 26px; background: var(--accent);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.section-title { font-size: 17px; font-weight: 700; }
+.section-sub { font-size: 12px; color: var(--muted); margin-left: auto; }
+.options-grid { display: grid; gap: 10px; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.option-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: 14px; cursor: pointer;
+  transition: all 0.18s; position: relative;
+}
+.option-card:hover {
+  border-color: var(--border-hover); background: var(--card-hover);
+  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,110,247,0.08);
+}
+.option-card.selected { background: var(--selected-bg); border-color: var(--selected-border); }
+.option-card.selected::after {
+  content: '✓'; position: absolute; top: 10px; right: 12px;
+  font-size: 12px; color: var(--accent); font-weight: 800;
+}
+.option-icon { font-size: 20px; margin-bottom: 6px; }
+.option-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.option-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.option-tag {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 4px; margin-top: 7px;
+}
+.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.color-swatch {
+  border-radius: 10px; padding: 10px 6px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.18s; text-align: center;
+  background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.color-swatch:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.color-swatch.selected { border-color: var(--accent); }
+.swatch-preview { width: 100%; height: 28px; border-radius: 6px; margin-bottom: 6px; }
+.swatch-name { font-size: 10px; font-weight: 700; color: var(--text); }
+.swatch-hex { font-size: 9px; color: var(--muted); font-family: monospace; }
+.slide-count-wrap {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+  display: flex; align-items: center; gap: 20px;
+}
+.slide-count-display { font-size: 36px; font-weight: 800; color: var(--accent); min-width: 80px; }
+.slide-count-display span { font-size: 13px; color: var(--muted); font-weight: 500; }
+input[type=range] {
+  flex: 1; -webkit-appearance: none; height: 5px;
+  background: var(--border); border-radius: 3px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  background: var(--accent); border-radius: 50%;
+  cursor: pointer; box-shadow: 0 2px 8px rgba(79,110,247,0.4);
+}
+.layout-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.layout-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: 14px; cursor: pointer;
+  transition: all 0.18s; position: relative;
+}
+.layout-card:hover {
+  border-color: var(--border-hover); transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79,110,247,0.08);
+}
+.layout-card.selected { background: var(--selected-bg); border-color: var(--selected-border); }
+.layout-card.selected::after {
+  content: '✓'; position: absolute; top: 10px; right: 12px;
+  font-size: 12px; color: var(--accent); font-weight: 800;
+}
+.layout-preview {
+  width: 100%; aspect-ratio: 16/9; border-radius: 7px;
+  margin-bottom: 10px; overflow: hidden; position: relative;
+  border: 1px solid var(--border);
+}
+.layout-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.layout-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
+  cursor: pointer; transition: all 0.18s;
+}
+.toggle-row:hover { border-color: var(--border-hover); }
+.toggle-row.active { border-color: var(--accent); background: var(--selected-bg); }
+.toggle-left { display: flex; align-items: center; gap: 12px; }
+.toggle-icon { font-size: 18px; }
+.toggle-label { font-size: 14px; font-weight: 600; }
+.toggle-hint { font-size: 11px; color: var(--muted); }
+.toggle-switch {
+  width: 38px; height: 21px; background: var(--border);
+  border-radius: 11px; position: relative; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-switch::after {
+  content: ''; position: absolute;
+  width: 15px; height: 15px; background: white; border-radius: 50%;
+  top: 3px; left: 3px; transition: transform 0.2s;
+}
+.toggle-row.active .toggle-switch { background: var(--accent); }
+.toggle-row.active .toggle-switch::after { transform: translateX(17px); }
+.content-input {
+  width: 100%; background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; color: var(--text);
+  font-family: 'Baloo 2', cursive, sans-serif;
+  font-size: 14px; line-height: 1.6; resize: vertical; min-height: 130px;
+  outline: none; transition: border-color 0.2s;
+}
+.content-input:focus { border-color: var(--accent); }
+.content-input::placeholder { color: var(--muted); }
+.tip-box {
+  background: #EEF1FF; border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 12px 14px; margin-top: 12px;
+  font-size: 12px; color: #4A5080; line-height: 1.6;
+}
+.tip-box strong { color: var(--accent); }
+.divider { border: none; border-top: 2px dashed var(--border); margin: 36px 0 28px; }
+.sub-section { margin-top: 18px; }
+.sub-label {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.sub-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.output-box {
+  background: var(--output-bg); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(26,29,46,0.12);
+}
+.output-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.output-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 1.5px; text-transform: uppercase; }
+.output-dots { display: flex; gap: 6px; }
+.output-dot { width: 10px; height: 10px; border-radius: 50%; }
+.copy-btn {
+  background: var(--accent); color: white; border: none;
+  padding: 8px 18px; border-radius: 8px;
+  font-family: 'Baloo 2', cursive, sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s;
+}
+.copy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.copy-btn.copied { background: var(--accent3); }
+.output-content {
+  padding: 22px; font-size: 13px; line-height: 1.85; color: var(--output-text);
+  white-space: pre-wrap; font-family: 'Baloo 2', cursive, sans-serif; min-height: 180px;
+}
+.output-empty { color: rgba(255,255,255,0.3); font-style: italic; }
+@media (max-width: 600px) {
+  .cols-3 { grid-template-columns: 1fr 1fr; }
+  .layout-grid { grid-template-columns: 1fr 1fr; }
+  .color-grid { grid-template-columns: repeat(3, 1fr); }
+  .top-bar h1 { white-space: normal; font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-tag">Công cụ miễn phí</div>
+  <h1>✦ Slide Prompt Builder</h1>
+  <p>Chọn nhu cầu của bạn — công cụ tự tạo prompt để dán vào Claude</p>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-steps" id="progressSteps"></div>
+  <div class="progress-label">Hoàn thành <span id="doneCount">0</span> / <span id="totalSteps">7</span> bước</div>
+</div>
+
+<div class="main">
+
+<!-- STEP 1 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">1</div>
+    <div class="section-title">Bạn tạo slide để làm gì?</div>
+    <div class="section-sub">Chọn 1</div>
+  </div>
+  <div class="options-grid cols-3">
+    <div class="option-card" data-key="purpose" data-val="pitch deck thuyết phục nhà đầu tư hoặc đối tác kinh doanh" onclick="sel(this)">
+      <div class="option-icon">🚀</div><div class="option-name">Pitch / Kêu gọi đầu tư</div>
+      <div class="option-desc">Thuyết phục investor, đối tác, xin ngân sách</div>
+      <div class="option-tag" style="background:#EEF1FF;color:#4F6EF7">Startup · Business</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="báo cáo kết quả công việc cho sếp hoặc team nội bộ" onclick="sel(this)">
+      <div class="option-icon">📊</div><div class="option-name">Báo cáo kết quả</div>
+      <div class="option-desc">Tổng kết tháng/quý, KPI, doanh thu cho team</div>
+      <div class="option-tag" style="background:#E6FBF4;color:#00C48C">Work · Internal</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="giới thiệu sản phẩm hoặc dịch vụ cho khách hàng tiềm năng" onclick="sel(this)">
+      <div class="option-icon">🛍️</div><div class="option-name">Giới thiệu sản phẩm</div>
+      <div class="option-desc">Demo tính năng, proposal gửi khách hàng</div>
+      <div class="option-tag" style="background:#FDE8F8;color:#E040C8">Sales · Marketing</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="bài giảng hoặc training nội bộ cho nhân viên hoặc học viên" onclick="sel(this)">
+      <div class="option-icon">🎓</div><div class="option-name">Bài giảng / Training</div>
+      <div class="option-desc">Dạy kỹ năng, hướng dẫn quy trình, onboarding</div>
+      <div class="option-tag" style="background:#FFF8E6;color:#F5A623">Education</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="trình bày ý tưởng dự án hoặc chiến lược mới cho team hoặc ban lãnh đạo" onclick="sel(this)">
+      <div class="option-icon">💡</div><div class="option-name">Đề xuất ý tưởng / Chiến lược</div>
+      <div class="option-desc">Trình bày kế hoạch mới, xin phê duyệt</div>
+      <div class="option-tag" style="background:#EEF1FF;color:#4F6EF7">Strategy</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="media kit hoặc portfolio giới thiệu thương hiệu cá nhân để tìm kiếm hợp tác" onclick="sel(this)">
+      <div class="option-icon">✨</div><div class="option-name">Media Kit / Portfolio</div>
+      <div class="option-desc">Giới thiệu bản thân, thương hiệu để hợp tác</div>
+      <div class="option-tag" style="background:#FDE8F8;color:#E040C8">Personal Brand</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="kế hoạch kinh doanh chi tiết bao gồm thị trường, tài chính và lộ trình phát triển" onclick="sel(this)">
+      <div class="option-icon">📋</div><div class="option-name">Kế hoạch kinh doanh</div>
+      <div class="option-desc">Business plan, thị trường, tài chính, lộ trình</div>
+      <div class="option-tag" style="background:#E6FBF4;color:#00C48C">Business Plan</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="tổ chức hoặc recap sự kiện hội thảo, trình bày chương trình và thông tin" onclick="sel(this)">
+      <div class="option-icon">🎪</div><div class="option-name">Sự kiện / Hội thảo</div>
+      <div class="option-desc">Chương trình sự kiện, recap, thông tin tổ chức</div>
+      <div class="option-tag" style="background:#FFF8E6;color:#F5A623">Event</div>
+    </div>
+    <div class="option-card" data-key="purpose" data-val="tuyển dụng nhân sự, giới thiệu công ty văn hóa và vị trí tuyển dụng" onclick="sel(this)">
+      <div class="option-icon">🤝</div><div class="option-name">Tuyển dụng</div>
+      <div class="option-desc">Giới thiệu công ty, văn hóa, vị trí cần tuyển</div>
+      <div class="option-tag" style="background:#EEF1FF;color:#4F6EF7">HR · Recruiting</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">2</div>
+    <div class="section-title">Người xem là ai?</div>
+    <div class="section-sub">Chọn 1</div>
+  </div>
+  <div class="options-grid cols-3">
+    <div class="option-card" data-key="audience" data-val="nhà đầu tư hoặc cấp trên — tone chuyên nghiệp, thuyết phục, dữ liệu rõ ràng" onclick="sel(this)">
+      <div class="option-icon">👔</div><div class="option-name">Sếp / Nhà đầu tư</div>
+      <div class="option-desc">Chuyên nghiệp, thuyết phục, dữ liệu rõ ràng</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="khách hàng tiềm năng — tone thân thiện, dễ hiểu, tập trung vào lợi ích" onclick="sel(this)">
+      <div class="option-icon">🛒</div><div class="option-name">Khách hàng</div>
+      <div class="option-desc">Thân thiện, dễ hiểu, tập trung lợi ích</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="đồng nghiệp hoặc team nội bộ — tone thoải mái, thực tế, đi thẳng vào vấn đề" onclick="sel(this)">
+      <div class="option-icon">👥</div><div class="option-name">Team / Đồng nghiệp</div>
+      <div class="option-desc">Thoải mái, thực tế, đi thẳng vào vấn đề</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="học sinh hoặc sinh viên — tone đơn giản, sinh động, dễ tiếp thu" onclick="sel(this)">
+      <div class="option-icon">📚</div><div class="option-name">Học sinh / Sinh viên</div>
+      <div class="option-desc">Đơn giản, sinh động, dễ tiếp thu</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="cộng đồng hoặc khán giả rộng — tone truyền cảm hứng, dễ hiểu, dễ lan tỏa" onclick="sel(this)">
+      <div class="option-icon">🌍</div><div class="option-name">Cộng đồng / Đại chúng</div>
+      <div class="option-desc">Truyền cảm hứng, dễ hiểu, dễ lan tỏa</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="đối tác kinh doanh tiềm năng — tone chuyên nghiệp, định hướng hợp tác win-win" onclick="sel(this)">
+      <div class="option-icon">🏢</div><div class="option-name">Đối tác kinh doanh</div>
+      <div class="option-desc">Chuyên nghiệp, định hướng hợp tác</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="ban lãnh đạo hoặc hội đồng quản trị — tone ngắn gọn súc tích, tập trung vào số liệu và quyết định" onclick="sel(this)">
+      <div class="option-icon">🏛️</div><div class="option-name">Ban lãnh đạo / BOD</div>
+      <div class="option-desc">Ngắn gọn, súc tích, số liệu và quyết định</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="nhân viên mới cần onboarding — tone thân thiện, hướng dẫn từng bước rõ ràng" onclick="sel(this)">
+      <div class="option-icon">🌱</div><div class="option-name">Nhân viên mới</div>
+      <div class="option-desc">Thân thiện, hướng dẫn rõ từng bước</div>
+    </div>
+    <div class="option-card" data-key="audience" data-val="khán giả hội thảo hoặc sự kiện công cộng — tone tự tin, truyền cảm hứng, dễ ghi nhớ" onclick="sel(this)">
+      <div class="option-icon">🎤</div><div class="option-name">Khán giả hội thảo</div>
+      <div class="option-desc">Tự tin, truyền cảm hứng, dễ ghi nhớ</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">3</div>
+    <div class="section-title">Phong cách thiết kế</div>
+    <div class="section-sub">Chọn 1</div>
+  </div>
+  <div class="options-grid cols-3">
+    <div class="option-card" data-key="style" data-val="dark mode premium: nền tối sang trọng, chữ lớn bold, tối giản kiểu Apple keynote hoặc Tesla" onclick="sel(this)">
+      <div class="option-icon">🌑</div><div class="option-name">Dark Premium</div>
+      <div class="option-desc">Nền tối, chữ lớn, sang trọng. Kiểu Apple / Tesla</div>
+    </div>
+    <div class="option-card" data-key="style" data-val="light mode tối giản: nền trắng sạch, nhiều khoảng trắng, chuyên nghiệp kiểu McKinsey hoặc consulting" onclick="sel(this)">
+      <div class="option-icon">☀️</div><div class="option-name">Light Clean</div>
+      <div class="option-desc">Nền sáng, tối giản, nhiều khoảng trắng</div>
+    </div>
+    <div class="option-card" data-key="style" data-val="bold colorful: màu sắc nổi bật, năng động, sáng tạo kiểu startup tech" onclick="sel(this)">
+      <div class="option-icon">⚡</div><div class="option-name">Bold & Energetic</div>
+      <div class="option-desc">Màu sắc mạnh, năng động. Kiểu startup / tech</div>
+    </div>
+    <div class="option-card" data-key="style" data-val="editorial magazine style: layout bất đối xứng sáng tạo, typography lớn ấn tượng như tạp chí" onclick="sel(this)">
+      <div class="option-icon">📰</div><div class="option-name">Editorial / Magazine</div>
+      <div class="option-desc">Layout sáng tạo, typography ấn tượng như tạp chí</div>
+    </div>
+    <div class="option-card" data-key="style" data-val="corporate professional: layout cân đối chuẩn mực, màu xanh navy, phù hợp doanh nghiệp truyền thống" onclick="sel(this)">
+      <div class="option-icon">🏛️</div><div class="option-name">Corporate Classic</div>
+      <div class="option-desc">Cân đối, an toàn, phù hợp doanh nghiệp lớn</div>
+    </div>
+    <div class="option-card" data-key="style" data-val="playful colorful: icon nhiều, vui tươi, màu sắc tươi sáng, phù hợp giáo dục" onclick="sel(this)">
+      <div class="option-icon">🎨</div><div class="option-name">Playful & Fun</div>
+      <div class="option-desc">Vui tươi, nhiều icon. Phù hợp giáo dục</div>
+    </div>
+  </div>
+  <div class="tip-box" style="margin-top:12px">
+    <strong>💡 Thấy slide đẹp muốn làm theo?</strong> Chụp màn hình slide đó → đính kèm ảnh vào Claude cùng prompt → thêm câu: <em>"Làm theo phong cách của slide trong ảnh đính kèm"</em>. Claude sẽ phân tích màu, font, layout và bắt chước.
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">4</div>
+    <div class="section-title">Màu chủ đạo</div>
+    <div class="section-sub">Chọn 1</div>
+  </div>
+  <div class="sub-label">Màu đơn</div>
+  <div class="color-grid">
+    <div class="color-swatch" data-key="color" data-val="#4F6EF7 (electric blue)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#4F6EF7"></div>
+      <div class="swatch-name">Electric Blue</div><div class="swatch-hex">#4F6EF7</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#E040C8 (neon pink)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#E040C8"></div>
+      <div class="swatch-name">Neon Pink</div><div class="swatch-hex">#E040C8</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#FF6B35 (vibrant orange)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#FF6B35"></div>
+      <div class="swatch-name">Vibrant Orange</div><div class="swatch-hex">#FF6B35</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#00C48C (fresh teal)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#00C48C"></div>
+      <div class="swatch-name">Fresh Teal</div><div class="swatch-hex">#00C48C</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#1B4FD8 (navy blue)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#1B4FD8"></div>
+      <div class="swatch-name">Navy Blue</div><div class="swatch-hex">#1B4FD8</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#E63946 (bold red)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#E63946"></div>
+      <div class="swatch-name">Bold Red</div><div class="swatch-hex">#E63946</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#F5C842 (golden yellow)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#F5C842"></div>
+      <div class="swatch-name">Golden</div><div class="swatch-hex">#F5C842</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#2D6A4F (forest green)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#2D6A4F"></div>
+      <div class="swatch-name">Forest Green</div><div class="swatch-hex">#2D6A4F</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#7C3AED (deep purple)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#7C3AED"></div>
+      <div class="swatch-name">Deep Purple</div><div class="swatch-hex">#7C3AED</div>
+    </div>
+    <div class="color-swatch" data-key="color" data-val="#374151 (anthracite)" onclick="selColor(this)">
+      <div class="swatch-preview" style="background:#374151"></div>
+      <div class="swatch-name">Anthracite</div><div class="swatch-hex">#374151</div>
+    </div>
+  </div>
+  <div class="sub-section">
+    <div class="sub-label">Màu gradient (2 màu kết hợp)</div>
+    <div class="color-grid">
+      <div class="color-swatch" data-key="color" data-val="gradient từ #4F6EF7 sang #E040C8 (xanh → hồng)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#4F6EF7,#E040C8)"></div>
+        <div class="swatch-name">Blue → Pink</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="gradient từ #FF6B35 sang #F5C842 (cam → vàng)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#FF6B35,#F5C842)"></div>
+        <div class="swatch-name">Orange → Gold</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="gradient từ #00C48C sang #4F6EF7 (teal → xanh)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#00C48C,#4F6EF7)"></div>
+        <div class="swatch-name">Teal → Blue</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="gradient từ #7C3AED sang #E040C8 (tím → hồng)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#7C3AED,#E040C8)"></div>
+        <div class="swatch-name">Purple → Pink</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="gradient từ #1B4FD8 sang #00C48C (navy → teal)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#1B4FD8,#00C48C)"></div>
+        <div class="swatch-name">Navy → Teal</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="gradient từ #E63946 sang #F5C842 (đỏ → vàng)" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#E63946,#F5C842)"></div>
+        <div class="swatch-name">Red → Gold</div><div class="swatch-hex">Gradient</div>
+      </div>
+      <div class="color-swatch" data-key="color" data-val="màu brand của tôi — tôi sẽ ghi mã hex trong phần nội dung bên dưới" onclick="selColor(this)">
+        <div class="swatch-preview" style="background:conic-gradient(red,yellow,lime,aqua,blue,magenta,red)"></div>
+        <div class="swatch-name">Màu Brand</div><div class="swatch-hex">Tự nhập</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">5</div>
+    <div class="section-title">Số lượng slide</div>
+  </div>
+  <div class="slide-count-wrap">
+    <div class="slide-count-display" id="slideCountDisplay">6 <span>slides</span></div>
+    <input type="range" min="4" max="100" value="6" id="slideRange" oninput="updateSlideCount(this.value)">
+  </div>
+  <div class="tip-box">
+    <strong>Gợi ý:</strong> Pitch deck 8–12 · Báo cáo tháng 6–10 · Bài giảng 15–25 · Kế hoạch kinh doanh 12–20 slides
+  </div>
+</div>
+
+<!-- STEP 6: LAYOUT -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num" style="background:#E040C8">6</div>
+    <div class="section-title">Chọn layout chính</div>
+    <div class="section-sub">Chọn nhiều — xem preview</div>
+  </div>
+  <div class="layout-grid">
+
+    <div class="layout-card" data-key="layout" data-val="layout 1 thông điệp chính mỗi slide: tiêu đề lớn ở giữa, text mô tả nhỏ phía dưới, icon hoặc số lớn làm điểm nhấn" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#F0F4FF"/>
+          <rect x="35" y="16" width="90" height="11" rx="3" fill="#4F6EF7" opacity="0.85"/>
+          <rect x="50" y="33" width="60" height="5" rx="2" fill="#CBD2E8"/>
+          <rect x="55" y="42" width="50" height="4" rx="2" fill="#CBD2E8"/>
+          <circle cx="80" cy="65" r="11" fill="#EEF1FF" stroke="#4F6EF7" stroke-width="1.5"/>
+          <text x="80" y="69.5" text-anchor="middle" font-size="9" fill="#4F6EF7" font-weight="bold">★</text>
+        </svg>
+      </div>
+      <div class="layout-name">1 Key Message</div>
+      <div class="layout-desc">1 ý chính mỗi slide, chữ lớn. Phù hợp keynote, pitch</div>
+    </div>
+
+    <div class="layout-card" data-key="layout" data-val="layout split 2 cột: cột trái là text tiêu đề và mô tả, cột phải là hình ảnh hoặc biểu đồ minh họa" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#F0F4FF"/>
+          <rect x="8" y="14" width="65" height="9" rx="2" fill="#4F6EF7" opacity="0.85"/>
+          <rect x="8" y="27" width="58" height="4" rx="2" fill="#CBD2E8"/>
+          <rect x="8" y="35" width="52" height="4" rx="2" fill="#CBD2E8"/>
+          <rect x="8" y="43" width="48" height="4" rx="2" fill="#CBD2E8"/>
+          <rect x="8" y="51" width="40" height="4" rx="2" fill="#CBD2E8"/>
+          <rect x="86" y="10" width="66" height="70" rx="7" fill="#DDE3F5"/>
+          <circle cx="119" cy="42" r="16" fill="#EEF1FF" stroke="#4F6EF7" stroke-width="1.5"/>
+          <rect x="104" y="62" width="30" height="3" rx="1" fill="#CBD2E8"/>
+        </svg>
+      </div>
+      <div class="layout-name">Split: Chữ + Hình</div>
+      <div class="layout-desc">Trái chữ, phải ảnh/chart. Phù hợp giải thích tính năng</div>
+    </div>
+
+    <div class="layout-card" data-key="layout" data-val="layout grid cards: tiêu đề trên cùng, bên dưới là lưới 2x2 các thẻ thông tin với icon và mô tả ngắn" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#F0F4FF"/>
+          <rect x="28" y="7" width="104" height="8" rx="2" fill="#4F6EF7" opacity="0.85"/>
+          <rect x="8" y="22" width="68" height="28" rx="4" fill="white" stroke="#DDE3F5" stroke-width="1.2"/>
+          <circle cx="22" cy="32" r="5" fill="#EEF1FF"/>
+          <rect x="30" y="29" width="32" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="30" y="36" width="24" height="3" rx="1" fill="#E8ECFF"/>
+          <rect x="84" y="22" width="68" height="28" rx="4" fill="white" stroke="#DDE3F5" stroke-width="1.2"/>
+          <circle cx="98" cy="32" r="5" fill="#FDE8F8"/>
+          <rect x="106" y="29" width="32" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="106" y="36" width="24" height="3" rx="1" fill="#E8ECFF"/>
+          <rect x="8" y="56" width="68" height="28" rx="4" fill="white" stroke="#DDE3F5" stroke-width="1.2"/>
+          <circle cx="22" cy="66" r="5" fill="#E6FBF4"/>
+          <rect x="30" y="63" width="32" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="30" y="70" width="24" height="3" rx="1" fill="#E8ECFF"/>
+          <rect x="84" y="56" width="68" height="28" rx="4" fill="white" stroke="#DDE3F5" stroke-width="1.2"/>
+          <circle cx="98" cy="66" r="5" fill="#FFF8E6"/>
+          <rect x="106" y="63" width="32" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="106" y="70" width="24" height="3" rx="1" fill="#E8ECFF"/>
+        </svg>
+      </div>
+      <div class="layout-name">Grid Cards (2×2)</div>
+      <div class="layout-desc">Lưới thẻ icon + text. Phù hợp liệt kê tính năng, lợi ích</div>
+    </div>
+
+    <div class="layout-card" data-key="layout" data-val="layout timeline: các bước theo thứ tự từ trái sang phải, mỗi bước có số thứ tự, tiêu đề và mô tả ngắn" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#F0F4FF"/>
+          <rect x="18" y="7" width="124" height="8" rx="2" fill="#4F6EF7" opacity="0.85"/>
+          <line x1="20" y1="50" x2="140" y2="50" stroke="#DDE3F5" stroke-width="2.5"/>
+          <circle cx="36" cy="50" r="9" fill="#4F6EF7"/>
+          <text x="36" y="54" text-anchor="middle" font-size="7" fill="white" font-weight="bold">1</text>
+          <circle cx="80" cy="50" r="9" fill="#E040C8"/>
+          <text x="80" y="54" text-anchor="middle" font-size="7" fill="white" font-weight="bold">2</text>
+          <circle cx="124" cy="50" r="9" fill="#00C48C"/>
+          <text x="124" y="54" text-anchor="middle" font-size="7" fill="white" font-weight="bold">3</text>
+          <rect x="22" y="64" width="28" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="24" y="70" width="24" height="3" rx="1" fill="#E8ECFF"/>
+          <rect x="66" y="64" width="28" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="68" y="70" width="24" height="3" rx="1" fill="#E8ECFF"/>
+          <rect x="110" y="64" width="28" height="3" rx="1" fill="#CBD2E8"/>
+          <rect x="112" y="70" width="24" height="3" rx="1" fill="#E8ECFF"/>
+        </svg>
+      </div>
+      <div class="layout-name">Timeline / Quy trình</div>
+      <div class="layout-desc">Các bước theo thứ tự. Phù hợp roadmap, quy trình làm việc</div>
+    </div>
+
+    <div class="layout-card" data-key="layout" data-val="layout big stat: con số lớn 60-80pt chiếm trung tâm slide gây ấn tượng mạnh, kèm label mô tả nhỏ bên dưới" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#1A1D2E"/>
+          <rect x="20" y="10" width="60" height="6" rx="2" fill="rgba(255,255,255,0.2)"/>
+          <text x="80" y="55" text-anchor="middle" font-size="38" fill="#4F6EF7" font-weight="bold">95%</text>
+          <rect x="42" y="62" width="76" height="4" rx="2" fill="rgba(255,255,255,0.15)"/>
+          <rect x="54" y="70" width="52" height="3" rx="2" fill="rgba(255,255,255,0.1)"/>
+        </svg>
+      </div>
+      <div class="layout-name">Big Stat / Impact</div>
+      <div class="layout-desc">Con số lớn gây ấn tượng mạnh. Phù hợp kết quả, thống kê</div>
+    </div>
+
+    <div class="layout-card" data-key="layout" data-val="layout full bleed image: hình ảnh chiếm toàn bộ slide làm nền, chữ overlay phía trên có nền mờ để dễ đọc" onclick="selLayout(this)">
+      <div class="layout-preview">
+        <svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <rect width="160" height="90" fill="#CBD5E8"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="30%" stop-color="#2D3561" stop-opacity="0.1"/>
+              <stop offset="100%" stop-color="#2D3561" stop-opacity="0.88"/>
+            </linearGradient>
+          </defs>
+          <rect width="160" height="90" fill="url(#g1)"/>
+          <rect x="10" y="54" width="85" height="9" rx="2" fill="white" opacity="0.9"/>
+          <rect x="10" y="67" width="65" height="5" rx="2" fill="white" opacity="0.6"/>
+          <rect x="10" y="76" width="48" height="5" rx="2" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="layout-name">Full Image + Text Overlay</div>
+      <div class="layout-desc">Ảnh toàn màn hình, chữ overlay. Phù hợp cover, visual mạnh</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- STEP 7: YÊU CẦU ĐẶC BIỆT -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num" style="background:#00C48C">7</div>
+    <div class="section-title">Yêu cầu đặc biệt</div>
+    <div class="section-sub">Tùy chọn — bật/tắt</div>
+  </div>
+
+  <div class="sub-label">File đính kèm</div>
+  <div class="toggle-row" id="t_logo" onclick="tog('t_logo','extra_logo','tôi sẽ đính kèm file logo — hãy đặt logo góc trên bên phải mỗi slide, không làm biến dạng tỉ lệ')">
+    <div class="toggle-left">
+      <div class="toggle-icon">🏷️</div>
+      <div><div class="toggle-label">Tôi có logo (sẽ đính kèm)</div><div class="toggle-hint">Đặt logo góc trên phải mỗi slide</div></div>
+    </div>
+    <div class="toggle-switch"></div>
+  </div>
+  <div class="toggle-row" id="t_img" onclick="tog('t_img','extra_img','tôi sẽ đính kèm hình ảnh thực tế (ảnh sản phẩm, team, thương hiệu) — hãy dùng chúng vào slide phù hợp và giữ nguyên tỉ lệ ảnh, không làm biến dạng')">
+    <div class="toggle-left">
+      <div class="toggle-icon">🖼️</div>
+      <div><div class="toggle-label">Tôi có ảnh thực tế (sẽ đính kèm)</div><div class="toggle-hint">Ảnh sản phẩm, team, thương hiệu — giữ nguyên tỉ lệ</div></div>
+    </div>
+    <div class="toggle-switch"></div>
+  </div>
+
+  <div class="sub-section">
+    <div class="sub-label">Nội dung đặc biệt</div>
+    <div class="toggle-row" id="t_stat" onclick="tog('t_stat','extra_stat','thêm ít nhất 1 slide big stat với con số lớn gây ấn tượng mạnh')">
+      <div class="toggle-left">
+        <div class="toggle-icon">💥</div>
+        <div><div class="toggle-label">Thêm slide số liệu ấn tượng</div><div class="toggle-hint">Con số lớn 95%, 10×, 3 triệu... gây impact</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+    <div class="toggle-row" id="t_cta" onclick="tog('t_cta','extra_cta','slide cuối cùng là call-to-action rõ ràng, kêu gọi hành động cụ thể')">
+      <div class="toggle-left">
+        <div class="toggle-icon">🔔</div>
+        <div><div class="toggle-label">Slide kêu gọi hành động cuối</div><div class="toggle-hint">Call-to-action rõ ràng ở slide cuối cùng</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+    <div class="toggle-row" id="t_agenda" onclick="tog('t_agenda','extra_agenda','slide thứ 2 là agenda hoặc mục lục tổng quan nội dung sẽ trình bày')">
+      <div class="toggle-left">
+        <div class="toggle-icon">📑</div>
+        <div><div class="toggle-label">Thêm slide agenda / mục lục</div><div class="toggle-hint">Slide thứ 2 là tổng quan nội dung</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+    <div class="toggle-row" id="t_quote" onclick="tog('t_quote','extra_quote','thêm slide trích dẫn quote nổi tiếng hoặc testimonial khách hàng với thiết kế đẹp')">
+      <div class="toggle-left">
+        <div class="toggle-icon">💬</div>
+        <div><div class="toggle-label">Thêm slide trích dẫn / Quote</div><div class="toggle-hint">Quote nổi tiếng hoặc testimonial khách hàng</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+  </div>
+
+  <div class="sub-section">
+    <div class="sub-label">Quy tắc thiết kế</div>
+    <div class="toggle-row" id="t_min" onclick="tog('t_min','extra_min','cực kỳ tối giản — mỗi slide tối đa 20 từ, không dùng bullet list, chỉ headline và visual')">
+      <div class="toggle-left">
+        <div class="toggle-icon">🧹</div>
+        <div><div class="toggle-label">Cực kỳ tối giản (ít chữ)</div><div class="toggle-hint">Mỗi slide tối đa 20 từ, không bullet list</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+    <div class="toggle-row" id="t_sandwich" onclick="tog('t_sandwich','extra_sandwich','slide title và slide kết luận dùng nền tối, các slide nội dung dùng nền sáng — kiểu sandwich')">
+      <div class="toggle-left">
+        <div class="toggle-icon">🥪</div>
+        <div><div class="toggle-label">Sandwich (đầu tối — giữa sáng — cuối tối)</div><div class="toggle-hint">Title & CTA nền tối, nội dung nền sáng</div></div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num" style="background:#F5A623">✎</div>
+    <div class="section-title">Tài liệu, nội dung muốn làm slide</div>
+    <div class="section-sub">Bắt buộc</div>
+  </div>
+  <textarea class="content-input" id="contentInput"
+    placeholder="Dán tài liệu vào đây — có thể là:&#10;• Mô tả sản phẩm / dịch vụ của bạn&#10;• Số liệu, kết quả muốn trình bày&#10;• Ý tưởng hoặc chiến lược cần trình bày&#10;• Nội dung thô bất kỳ — Claude sẽ tự tổ chức lại"
+    oninput="buildPrompt()" rows="6"></textarea>
+  <div class="tip-box">
+    <strong>💡 Mẹo:</strong> Không cần dọn dẹp hay viết hoàn hảo. Gửi tài liệu thô cũng được — Claude tự sắp xếp thành cấu trúc slide hợp lý. Nếu dùng màu brand riêng, ghi mã hex vào đây.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- OUTPUT -->
+<div class="section-header">
+  <div class="step-num" style="background:linear-gradient(135deg,#4F6EF7,#E040C8)">✦</div>
+  <div class="section-title">Prompt của bạn</div>
+</div>
+<div class="output-box">
+  <div class="output-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="output-dots">
+        <div class="output-dot" style="background:#FF5F57"></div>
+        <div class="output-dot" style="background:#FFBD2E"></div>
+        <div class="output-dot" style="background:#28C940"></div>
+      </div>
+      <div class="output-title">Sẵn sàng dán vào Claude</div>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt()" id="copyBtn">📋 Sao chép</button>
+  </div>
+  <div class="output-content" id="promptOutput"><span class="output-empty">Chọn các tùy chọn bên trên — prompt sẽ tự động tạo ở đây...</span></div>
+</div>
+<div class="tip-box" style="margin-top:14px">
+  <strong>📌 Cách dùng:</strong> Sao chép prompt → Mở Claude.ai → Dán vào ô chat + đính kèm file tài liệu và ảnh nếu có → Gửi. Claude sẽ tạo file .pptx hoàn chỉnh để tải về.
+</div>
+
+</div>
+
+<script>
+const state = { purpose:'', audience:'', style:'', color:'', slides:6, layout:'', extras:{}, content:'' };
+const TOTAL = 7;
+
+function initProgress() {
+  const w = document.getElementById('progressSteps');
+  document.getElementById('totalSteps').textContent = TOTAL;
+  for(let i=0;i<TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='step-dot'; d.id='dot'+i; w.appendChild(d);
+  }
+  refreshProgress();
+}
+
+function refreshProgress(){
+  let done=0;
+  if(state.purpose) done++;
+  if(state.audience) done++;
+  if(state.style) done++;
+  if(state.color) done++;
+  if(state.slides) done++;
+  if(state.layout && state.layout.length>0) done++;
+  if(state.content.trim()) done++;
+  document.getElementById('doneCount').textContent=done;
+  for(let i=0;i<TOTAL;i++){
+    const d=document.getElementById('dot'+i);
+    d.className='step-dot'+(i<done?' done':i===done?' active':'');
+  }
+}
+
+function sel(el){
+  const key=el.dataset.key;
+  document.querySelectorAll('[data-key="'+key+'"]').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state[key]=el.dataset.val;
+  refreshProgress(); buildPrompt();
+}
+
+function selLayout(el){
+  el.classList.toggle('selected');
+  const selected=[...document.querySelectorAll('.layout-card.selected')].map(e=>e.dataset.val);
+  state.layout=selected.join('|||');
+  refreshProgress(); buildPrompt();
+}
+
+function selColor(el){
+  document.querySelectorAll('.color-swatch').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.color=el.dataset.val;
+  refreshProgress(); buildPrompt();
+}
+
+function updateSlideCount(v){
+  state.slides=parseInt(v);
+  document.getElementById('slideCountDisplay').innerHTML=v+' <span>slides</span>';
+  buildPrompt();
+}
+
+function tog(id,key,val){
+  const row=document.getElementById(id);
+  const on=row.classList.toggle('active');
+  if(on) state.extras[key]=val;
+  else delete state.extras[key];
+  buildPrompt();
+}
+
+function buildPrompt(){
+  state.content=document.getElementById('contentInput').value;
+  refreshProgress();
+  const lines=[];
+  lines.push('Tạo bài thuyết trình PowerPoint (.pptx) cho tôi theo yêu cầu dưới đây:\n');
+  lines.push('── INSTRUCTIONS ──────────────────────────');
+  lines.push('Mục đích       : '+(state.purpose||'[chưa chọn]'));
+  lines.push('Người xem      : '+(state.audience||'[chưa chọn]'));
+  lines.push('Phong cách     : '+(state.style||'[chưa chọn]'));
+  lines.push('Màu chủ đạo   : '+(state.color||'[chưa chọn]'));
+  lines.push('Số lượng slide : '+state.slides+' slides');
+  lines.push('Layout chính   : '+(state.layout ? state.layout.split('|||').map((l,i)=>(i===0?l:'\n                   • '+l)).join('') : '[chưa chọn]'));
+  const extras=Object.values(state.extras);
+  if(extras.length>0){
+    lines.push('\nYêu cầu thêm:');
+    extras.forEach(v=>lines.push('• '+v));
+  }
+  lines.push('\nQuy tắc thiết kế:');
+  lines.push('• Thiết kế đẹp, chuyên nghiệp — không nhồi quá nhiều text vào 1 slide');
+  lines.push('• Mỗi slide cần có visual element (icon, hình, chart hoặc shape trang trí)');
+  lines.push('• Dùng font chữ phù hợp với phong cách đã chọn');
+  lines.push('• Tạo file .pptx để tôi tải về\n');
+  lines.push('── CONTENT ───────────────────────────────');
+  lines.push(state.content.trim()||'[Dán tài liệu, nội dung của bạn vào đây]');
+  document.getElementById('promptOutput').textContent=lines.join('\n');
+}
+
+function copyPrompt(){
+  const text=document.getElementById('promptOutput').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copyBtn');
+    btn.textContent='✓ Đã sao chép!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Sao chép';btn.classList.remove('copied');},2200);
+  });
+}
+
+initProgress();
+buildPrompt();
+</script>
+</body>
+</html>
